@@ -1,0 +1,89 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © owroc
+//@version=5
+indicator(title='Channel Width Label', shorttitle='Channel Width', overlay=true)
+
+//input values
+//len is based on 3 month look back so 52wks / 4qtr = 13wks/qtr * 5 trading days/wk = 65 days 
+len = input.int(65, title='Days to Look Back', minval=1)
+per = input(95, title='Percentage of Values')
+ref = input(26, title='EMA Length')
+periods = input(10, title=' ATR Periods')
+src = input(close, title='Source')
+
+//Calculate the number of values that will be included inside the envelope
+valuesInChannel = int(per / 100 * len - 1)
+centerLine = ta.ema(src, ref)
+float width = 0
+float risk = 0
+float risk_2 = 0
+float risk_3 = 0
+float long_p = 0
+float long_p_2 = 0
+float long_p_3 = 0
+float short_p = 0
+float short_p_2 = 0
+float short_p_3 = 0
+
+//define the array that will hold all the closing values for each bar
+a = array.new_float(0)
+
+//define the table that will hold the channel width and ATR values
+var table numDisplay = table.new(position.top_center, columns = 4, rows = 3)
+
+//calculate ATR for current bar
+myAtr = ta.atr(periods)
+
+if bar_index > 70
+    for i = 0 to len - 1 by 1
+        //load the array with the last <len> values and sort
+        array.push(a, math.abs(src[i] - centerLine[i]))
+
+    array.sort(a, order.ascending)
+    width := array.max(array.slice(a, 0, valuesInChannel + 1))
+
+    if barstate.islast
+        
+        //calculate base risk levels based on 2 x ATR
+        risk := myAtr * 2
+        risk_2 := risk * 2
+        risk_3 := risk * 3
+        long_p := close + risk
+        long_p_2 := close + risk_2
+        long_p_3 := close + risk_3
+        short_p := close - risk
+        short_p_2 := close - risk_2
+        short_p_3 := close - risk_3
+        
+        //set up table data
+        table.set_border_color(numDisplay, color.black)
+        table.set_border_width(numDisplay, border_width = 2)
+        table.set_frame_color(numDisplay, color.black)
+        table.set_frame_width(numDisplay, frame_width = 2)
+        table.cell(numDisplay, 0, 0, text_halign = text.align_left, text = 'ATR('+ str.tostring(periods) + ') = ' + str.tostring(myAtr, '#.###'))
+        table.cell(numDisplay, 0, 2, text_halign = text.align_left, text = 'Channel Width = ' + str.tostring(width, '#.###'))
+        table.cell(numDisplay, 1, 0, text_halign = text.align_left, text = 'Risk = ' + str.tostring(risk, '#.##'))
+        table.cell(numDisplay, 1, 1, text_halign = text.align_left, text = 'Risk x 2 = ' + str.tostring(risk_2, '#.##'))
+        table.cell(numDisplay, 1, 2, text_halign = text.align_left, text = 'Risk x 3 = ' + str.tostring(risk_3, '#.##'))
+        table.cell(numDisplay, 2, 0, text_halign = text.align_left, text = 'Long = ' + str.tostring(long_p, '#.##'))
+        table.cell(numDisplay, 2, 1, text_halign = text.align_left, text = 'Long = ' + str.tostring(long_p_2, '#.##'))
+        table.cell(numDisplay, 2, 2, text_halign = text.align_left, text = 'Long = ' + str.tostring(long_p_3, '#.##'))
+        table.cell(numDisplay, 3, 0, text_halign = text.align_left, text = 'Short = ' + str.tostring(short_p, '#.##'))
+        table.cell(numDisplay, 3, 1, text_halign = text.align_left, text = 'Short = ' + str.tostring(short_p_2, '#.##'))
+        table.cell(numDisplay, 3, 2, text_halign = text.align_left, text = 'Short = ' + str.tostring(short_p_3, '#.##'))
+
+        //long cell coloring
+        if close + risk <= centerLine + width
+            table.cell_set_bgcolor(numDisplay, 2, 0, bgcolor = color.lime)
+        if close + risk_2 <= centerLine + width
+            table.cell_set_bgcolor(numDisplay, 2, 1, bgcolor = color.lime)
+        if close + risk_3 <= centerLine + width
+            table.cell_set_bgcolor(numDisplay, 2, 2, bgcolor = color.lime)
+        
+        //short cell coloring
+        if close - risk >= centerLine - width
+            table.cell_set_bgcolor(numDisplay, 3, 0, bgcolor = color.red)
+        if close - risk_2 >= centerLine - width
+            table.cell_set_bgcolor(numDisplay, 3, 1, bgcolor = color.red)
+        if close - risk_3 >= centerLine - width
+            table.cell_set_bgcolor(numDisplay, 3, 2, bgcolor = color.red)

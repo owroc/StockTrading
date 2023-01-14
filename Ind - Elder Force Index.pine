@@ -1,0 +1,10 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © owroc
+
+//@version=5
+indicator(title='Elders Force Index', shorttitle='EFI', format=format.volume, timeframe='')
+length = input.int(13, minval=1)
+efi = ta.ema(ta.change(close) * volume, length)
+
+plot(efi, color=efi >= 0 ? color.green : color.red, style=plot.style_area, title='Elders Force Index')
+hline(0, color=color.black, linestyle=hline.style_dashed, title='Zero')

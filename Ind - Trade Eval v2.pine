@@ -1,0 +1,103 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © owroc
+//@version=5
+indicator(title='Trade Eval', shorttitle='Trade Eval', overlay=true, max_lines_count = 200, max_bars_back = 100)
+
+//input values
+//len is based on 3 month look back so 52wks / 4qtr = 13wks/qtr * 5 trading days/wk = 65 days 
+len = input.int(65, title='Days to Look Back', minval=1)
+per = input(95, title='Percentage of Values')
+ref = input(26, title='EMA Length')
+periods = input(10, title=' ATR Periods')
+src = input(close, title='Source')
+bpr = input.float(0, title='Buy Price')
+rsk = input.float(0, title='Risk to Price', inline = "01")
+atrm = input.int(1, "ATR Multiple", inline = "01")
+
+//Calculate the number of values that will be included inside the envelope
+valuesInChannel = int(per / 100 * len)
+//Assign the slow ema value for the bar to a variable
+centerLine = ta.ema(src, ref)
+//Assign ATR for the current bar to a variable
+myAtr = ta.atr(periods)
+
+float width = 0
+float risk = 0
+float risk_2 = 0
+float risk_3 = 0
+float long_nl = 0
+float long_p1 = 0
+float long_p2 = 0
+float short_nl = 0
+float short_p1 = 0
+float short_p2 = 0
+
+//define the array that will hold all the closing values for each bar
+a = array.new_float(0)
+
+//define the table that will hold the channel width and ATR values
+var table numDisplay = table.new(position.top_right, columns = 4, rows = 2)
+table.set_border_color(numDisplay, color.black)
+table.set_border_width(numDisplay, border_width = 2)
+table.set_frame_color(numDisplay, color.black)
+table.set_frame_width(numDisplay, frame_width = 2)
+
+if bar_index > 70
+    //load the array with the last <len> values and sort
+    for i = 0 to len - 1 by 1
+        array.push(a, math.abs(src[i] - centerLine[i]))
+
+    array.sort(a, order.ascending)
+    width := array.max(array.slice(a, 0, valuesInChannel))
+
+    if barstate.islast
+            
+        //calculate base risk levels based on 2 x ATR or input risk
+        if rsk == 0
+            risk := myAtr * atrm
+            risk_2 := risk * 2
+            risk_3 := risk * 3
+        else
+            risk := math.abs(rsk - bpr)
+            risk_2 := risk * 2
+            risk_3 := risk * 3
+            
+        long_nl := bpr + risk
+        long_p1 := bpr + risk_2
+        long_p2 := bpr + risk_3
+        short_nl := bpr - risk
+        short_p1 := bpr - risk_2
+        short_p2 := bpr - risk_3
+        
+        //risk lines for long postitions
+        line.new(bar_index[valuesInChannel], long_nl, bar_index, long_nl, xloc=xloc.bar_index, extend=extend.none, style=line.style_solid, color=color.green, width=1)
+        label.new(bar_index, long_nl, str.tostring(long_nl, '#.##'), style = label.style_none)
+        line.new(bar_index[valuesInChannel], long_p1, bar_index, long_p1, xloc=xloc.bar_index, extend=extend.none, style=line.style_solid, color=color.green, width=1)
+        label.new(bar_index, long_p1, str.tostring(long_p1, '#.##'), style = label.style_none)
+        line.new(bar_index[valuesInChannel], long_p2, bar_index, long_p2, xloc=xloc.bar_index, extend=extend.none, style=line.style_solid, color=color.green, width=1)
+        label.new(bar_index, long_p2, str.tostring(long_p2, '#.##'), style = label.style_none)
+
+        //buy price line
+        line.new(bar_index[valuesInChannel], bpr, bar_index, bpr, xloc=xloc.bar_index, extend=extend.none, style=line.style_solid, color=color.black, width=2)
+        label.new(bar_index, bpr, str.tostring(bpr, '#.##'), style = label.style_none)
+
+        
+        //risk lines for short postitions
+        line.new(bar_index[valuesInChannel], short_nl, bar_index, short_nl, xloc=xloc.bar_index, extend=extend.none, style=line.style_solid, color=color.red, width=1)
+        label.new(bar_index, short_nl, str.tostring(short_nl, '#.##'), style = label.style_none)
+        line.new(bar_index[valuesInChannel], short_p1, bar_index, short_p1, xloc=xloc.bar_index, extend=extend.none, style=line.style_solid, color=color.red, width=1)
+        label.new(bar_index, short_p1, str.tostring(short_p1, '#.##'), style = label.style_none)
+        line.new(bar_index[valuesInChannel], short_p2, bar_index, short_p2, xloc=xloc.bar_index, extend=extend.none, style=line.style_solid, color=color.red, width=1)
+        label.new(bar_index, short_p2, str.tostring(short_p2, '#.##'), style = label.style_none)
+     
+     
+        //set up table data
+        if risk == myAtr * 2
+            table.cell(numDisplay, 0, 0, text_halign = text.align_left, text_size = size.small, text = 'ATR('+ str.tostring(periods) + ') = ' + str.tostring(myAtr, '#.###'))
+            table.cell(numDisplay, 1, 0, text_halign = text.align_left, text_size = size.small, text = 'Risk 2 * ATR = ' + str.tostring(risk, '#.###'))
+        else
+            table.cell(numDisplay, 0, 0, text_halign = text.align_left, text_size = size.small, text = 'ATR('+ str.tostring(periods) + ') = ' + str.tostring(myAtr, '#.###'))
+            table.cell(numDisplay, 1, 0, text_halign = text.align_left, text_size = size.small, text = 'Custom Risk = ' + str.tostring(risk, '#.###'))
+    
+        table.cell(numDisplay, 0, 1, text_halign = text.align_left, text_size = size.small, text = 'Upper Channel = ' + str.tostring(centerLine[0] + width, '#.##'))
+        table.cell(numDisplay, 1, 1, text_halign = text.align_left, text_size = size.small, text = 'Lower Channel = ' + str.tostring(centerLine[0] - width, '#.##'))

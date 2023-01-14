@@ -1,0 +1,18 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © owroc
+//@version=5
+indicator(title='Elder Channel', shorttitle='Elder Channel', overlay=true)
+
+//input values
+ref = input(26, title='EMA Length')
+lookback = input(65, title='Lookback')
+src = input(close, title='Source')
+width = input(4.1, title='Channel Width')
+
+
+centerLine = ta.ema(src, ref)
+
+
+//plot channel lines
+plot(centerLine + width, style=plot.style_circles, linewidth=2, color=color.blue, show_last=lookback)
+plot(centerLine - width, style=plot.style_circles, linewidth=2, color=color.blue, show_last=lookback)

@@ -1,0 +1,17 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © owroc
+
+//@version=5
+indicator("Value Zone", overlay=true)
+
+emaf = input(13, 'Fast EMA')
+emas = input(26, 'Slow EMA')
+src = input(close, 'Source')
+
+emafast = ta.ema(close, emaf)
+emaslow = ta.ema(close, emas)
+
+vz1 = close < emafast and close > emaslow
+vz2 = close > emafast and close < emaslow
+
+plotshape(vz1 or vz2, style=shape.circle, color=color.black, location=location.abovebar)

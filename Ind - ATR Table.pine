@@ -1,0 +1,23 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © owroc
+
+//@version=5
+indicator(title ='RO ATR', shorttitle='ATR', overlay=false)
+periods = input(10, title='ATR Periods')
+var table numDisplay = table.new(position.top_center, columns=9, rows=1)
+
+myAtr = ta.atr(periods)
+
+if barstate.islast
+    //dummy cell to space out atr data
+    table.cell(numDisplay, 0, 0, text_halign = text.align_left, text_size = size.small, text_color = color.orange, text = str.tostring(myAtr, '#.###'))
+    
+    table.cell(numDisplay, 4, 0, text_halign = text.align_left, text_size = size.small, text = str.tostring(close, '#.###'))
+    
+    table.cell(numDisplay, 1, 0, text_halign = text.align_left, text_size = size.small, text_color = color.green, text = str.tostring(close + (myAtr * 3), '#.###'))
+    table.cell(numDisplay, 2, 0, text_halign = text.align_left, text_size = size.small, text_color = color.green, text = str.tostring(close + (myAtr * 2), '#.###'))
+    table.cell(numDisplay, 3, 0, text_halign = text.align_left, text_size = size.small, text_color = color.green, text = str.tostring(close + myAtr, '#.###'))
+
+    table.cell(numDisplay, 5, 0, text_halign = text.align_left, text_size = size.small, text_color = color.red, text = str.tostring(close - myAtr, '#.###'))
+    table.cell(numDisplay, 6, 0, text_halign = text.align_left, text_size = size.small, text_color = color.red, text = str.tostring(close - (myAtr * 2), '#.###'))
+    table.cell(numDisplay, 7, 0, text_halign = text.align_left, text_size = size.small, text_color = color.red, text = str.tostring(close - (myAtr * 3), '#.###'))
