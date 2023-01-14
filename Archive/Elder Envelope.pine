@@ -1,0 +1,32 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © owroc
+//@version=4
+study(title="Elder Envelope", shorttitle="Env", overlay=true)
+
+//input values
+len = input(65, title="Days to Look Back", minval=1)
+per = input(95, title="Percentage of Values")
+ref = input(26, title="EMA Length")
+src = input(close, title="Source")
+
+//Calculate the number of values that will be included inside the envelope
+valuesInChannel = int((per / 100 * 65) - 1)
+centerLine = ema(src, ref)
+float width = 0
+
+//define the array that will hold all the closing values for each bar
+a = array.new_float(0)
+
+if bar_index > 70
+    for i = 0 to len - 1
+        //load the array with the last <len> values and sort
+        array.push(a, abs(src[i] - centerLine[i]))
+        
+    array.sort(a, order.ascending)
+    width := array.max(array.slice(a, 0, valuesInChannel + 1))
+    if barstate.islast
+        label.new(bar_index, 0, "Channel Width: " + tostring(width), size=size.large)
+
+//plot(centerLine)
+//plot(centerLine + width, show_last = len)
+//plot(centerLine - width, show_last = len)
